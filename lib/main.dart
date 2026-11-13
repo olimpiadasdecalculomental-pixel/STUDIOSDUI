@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'nucleo/escudo_aislamiento.dart';
+
 import 'nucleo/orquestador_sdui.dart';
 
 void main() {
@@ -11,7 +11,7 @@ void main() {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ));
-    instalarEscudoGlobalFlutter();
+    
     runApp(const StudioSduiFabricaApp());
   }, (error, stack) {
     debugPrint('Escudo Global Studio SDUI activo: $error');
