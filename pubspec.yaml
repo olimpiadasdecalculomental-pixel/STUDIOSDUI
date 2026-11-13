@@ -1,0 +1,124 @@
+name: studio_sdui_fabrica_prd_rfc
+description: APK #2 Fabrica Studio PRD, RFC, Sandbox, Logica RPC y PDF (Esquema 2 y Esquema 3 - 73 Librerias)
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 1. Los 3 Motores SDUI, Backend Supabase y Cache Offline
+  supabase_flutter: ^2.8.0
+  stac: ^0.7.0
+  json_dynamic_widget: ^7.0.6
+  hive_ce: ^2.6.0
+  http: ^1.2.2
+  shared_preferences: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.5
+  sqflite: ^2.4.0
+  cached_network_image: ^3.4.1
+  flutter_riverpod: ^2.6.1
+
+  # 2. Arrastrar y Soltar (Drag & Drop)
+  drag_and_drop_lists: ^0.4.2
+
+  # 3. Chat WeChat, Notas de Voz, Llamadas P2P y Voz Parlante
+  flutter_chat_ui: ^1.6.15
+  flutter_webrtc: ^0.12.1
+  record: ^5.1.2
+  just_audio: ^0.9.42
+  flutter_tts: ^4.1.0
+  audioplayers: ^6.1.0
+  share_plus: ^10.1.2
+
+  # 4. Finanzas, Cripto Binance, WebSockets y Biometria
+  fl_chart: ^0.69.0
+  web_socket_channel: ^3.0.1
+  crypto: ^3.0.6
+  flutter_secure_storage: ^9.2.2
+  local_auth: ^2.3.0
+
+  # 5. Educacion, Visor PDF, Escaner QR y Multimedia
+  mobile_scanner: ^6.0.2
+  pdfrx: ^1.0.92
+  video_player: ^2.9.2
+  chewie: ^1.8.5
+  webview_flutter: ^4.10.0
+  pdf: ^3.11.1
+  printing: ^5.13.4
+  image_picker: ^1.1.2
+
+  # 6. Juegos 2D, Fisica Box2D, Modelos 3D y Video VR 360
+  flame: ^1.21.0
+  forge2d: ^0.13.1
+  model_viewer_plus: ^1.8.1
+  video_360: ^0.0.8
+  confetti: ^0.8.0
+  flutter_animate: ^4.5.0
+
+  # 7. Hardware, IoT Arduino, Bluetooth BLE, WiFi, GPS y 4DX
+  mqtt_client: ^10.5.1
+  flutter_blue_plus: ^1.34.5
+  wifi_iot: ^0.3.19
+  vibration: ^2.0.1
+  geolocator: ^13.0.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+  sensors_plus: ^6.1.0
+  connectivity_plus: ^6.1.0
+
+  # 8 y 9. Matematicas, Calculo, Fisica y Quimica
+  flutter_math_fork: ^0.7.3
+  math_expressions: ^2.6.0
+  equations: ^5.0.2
+  units_converter: ^3.0.2
+
+  # 10. Dibujo, Pizarra Tactil y Vectorial SVG
+  flutter_drawing_board: ^0.9.5
+  flutter_svg: ^2.0.14
+  url_launcher: ^6.3.1
+
+  # 11. Inteligencia Artificial + Alarma Hablada
+  google_generative_ai: ^0.4.6
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+
+  # 12. Complementos visuales de fidelidad 100% con Google Stitch
+  google_fonts: ^6.2.1
+  lucide_icons_flutter: ^1.2.5
+  dotted_border: ^2.1.0
+  shimmer: ^3.0.0
+
+  # 13. Fabrica Studio PRD, RFC, Sandbox Faker, Grafos de Nodos, IA Local e Inspector de Codigo
+  faker: ^2.2.0
+  graphview: ^1.2.0
+  flutter_markdown: ^0.7.4+1
+  expressions: ^0.2.5+2
+  flutter_gemma: ^0.4.0
+  flutter_highlight: ^0.7.0
+  highlight: ^0.7.0
+  json_path: ^0.7.4
+  diff_match_patch: ^0.4.1
+  csv: ^6.0.0
+  archive: ^3.6.1
+  device_info_plus: ^11.1.1
+
+dependency_overrides:
+  petitparser: ^6.0.2
+  intl: ^0.19.0
+  meta: ^1.15.0
+  collection: ^1.18.0
+  web: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - logo.png

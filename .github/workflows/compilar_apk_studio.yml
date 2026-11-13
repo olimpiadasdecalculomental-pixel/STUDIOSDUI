@@ -1,0 +1,55 @@
+name: Compilar APK Gratis STUDIO SDUI (Esquema 2 - Fabrica PRD, RFC, SQL y PDF)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-apk-studio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. Descargar repositorio STUDIOSDUI
+        uses: actions/checkout@v4
+
+      - name: 2. Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 3. Instalar Flutter 3.24.5 LTS (Dart 3.5+ Compatible con las 73 librerias)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: 4. Generar estructura Android/iOS con ID unico (com.orbe.studiosdui) para convivir con APK 1
+        run: |
+          mv pubspec.yaml /tmp/pubspec_full.yaml
+          cp -r lib /tmp/lib_backup
+          if [ -f "logo.png" ]; then cp logo.png /tmp/logo_backup.png; fi
+          rm -rf android ios test analysis_options.yaml
+          flutter create --no-pub --platforms=android,ios --org com.orbe.studiosdui --project-name studio_sdui_fabrica_prd_rfc .
+          rm -rf test analysis_options.yaml lib
+          mv /tmp/pubspec_full.yaml pubspec.yaml
+          cp -r /tmp/lib_backup lib
+          if [ -f "/tmp/logo_backup.png" ]; then cp /tmp/logo_backup.png logo.png; fi
+          python3 configurar_build.py android
+
+      - name: 5. Resolver librerias de Ingenieria/PDF y verificar los 18 Microservicios Dart
+        run: |
+          python3 configurar_build.py pub
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: 6. Compilar APK Release de STUDIO SDUI (Esquema 2)
+        run: |
+          python3 configurar_build.py apk
+
+      - name: 7. Publicar APK descargable STUDIO SDUI en GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Studio-SDUI-PRD-RFC-PDF-Esquema2
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
