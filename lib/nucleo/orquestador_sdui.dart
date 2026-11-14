@@ -6,7 +6,6 @@ import 'escudo_aislamiento.dart';
 import 'puente_supabase_sdui.dart';
 import 'modales_candado_y_editor.dart';
 import 'despachador_acciones.dart';
-import 'inspector_stitch.dart';
 import '../microservicios/ms_01_header_y_grids.dart';
 import '../microservicios/ms_02_catalogo_y_drag_drop.dart';
 import '../microservicios/ms_03_wechat_y_ciencias.dart';
@@ -29,8 +28,6 @@ class LienzoMaestroSdui extends StatefulWidget {
 class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
   final PageController _pageCtrl = PageController();
   int _indicePagina = 0;
-  bool _esAdmin = true;
-  bool _modoStitchEdit = false;
   int _toquesEsquina = 0;
   Timer? _timerToques;
   Timer? _timer4DX;
@@ -55,19 +52,29 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
       'color_primario': '#A9C7FF',
       'color_secundario': '#FBB400',
       'color_terciario': '#00509D',
-      'margen_arriba': 34,
-      'margen_abajo': 48,
+      'margen_arriba': 0,
+      'margen_abajo': 0,
       'margen_izquierda': 0,
       'margen_derecha': 0
     },
     'pestanas': [
-      {'id': 'RAIZ', 'titulo': '📘 1. PRD / RFC & PDF', 'visible': true},
-      {'id': 'PANTALLA_SANDBOX', 'titulo': '🧪 2. SANDBOX & NODOS', 'visible': true},
-      {'id': 'PANTALLA_CODIGO_SQL', 'titulo': '🗄️ 3. CÓDIGO, TABLAS Y RPCS', 'visible': true},
-      {'id': 'PANTALLA_VISTA_STITCH', 'titulo': '🎨 4. SIMULADOR STITCH', 'visible': true},
+      {'id': 'RAIZ', 'titulo': '🎨 1. STITCH REAL 1:1', 'visible': true},
+      {'id': 'PANTALLA_PRD_RFC', 'titulo': '📘 2. PRD / RFC / PDF', 'visible': true},
+      {'id': 'PANTALLA_SANDBOX', 'titulo': '🧪 3. SANDBOX Y TABLAS', 'visible': true},
     ],
     'pantallas_json': {
       'RAIZ': [
+        {
+          'id': 'studio_stitch_pantalla_completa',
+          'visible': true,
+          'tipo': 'STITCH_DISENO_1_EXACTO',
+          'header_titulo': 'SAN JOSÉ',
+          'header_anio': '1942',
+          'header_rango': 'SOCIO VIP',
+          'header_puntos': '350',
+        }
+      ],
+      'PANTALLA_PRD_RFC': [
         {
           'id': 'studio_panel_prd_rfc_completo',
           'visible': true,
@@ -75,19 +82,7 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
           'titulo': '📘 FÁBRICA DE PRD, RFC, CÓDIGO SQL Y EXPORTADOR PDF'
         }
       ],
-      'PANTALLA_SANDBOX': [],
-      'PANTALLA_CODIGO_SQL': [],
-      'PANTALLA_VISTA_STITCH': [
-        {
-          'id': 'studio_preview_stitch_5_pantallas',
-          'visible': true,
-          'tipo': 'STITCH_DISENO_1_EXACTO',
-          'header_titulo': 'SAN JOSÉ',
-          'header_anio': '1942',
-          'header_rango': 'MODO STUDIO ESQ2',
-          'header_puntos': '350',
-        }
-      ]
+      'PANTALLA_SANDBOX': []
     }
   };
 
@@ -119,24 +114,6 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
     if (nube != null && mounted) setState(() => _contrato = nube);
   }
 
-  Future _alternarEsquemaEnVivo() async {
-    HapticFeedback.heavyImpact();
-    final nuevoEsq = PuenteSupabaseSdui.esquemaActivo == 'esquema2' ? 'esquema3' : 'esquema2';
-    setState(() {
-      PuenteSupabaseSdui.esquemaActivo = nuevoEsq;
-      _indicePagina = 0;
-      _feedback = '🔄 Conectando en vivo con [$nuevoEsq]...';
-    });
-    await sincronizarContratoSdui();
-    if (mounted) {
-      setState(() {
-        _feedback = nuevoEsq == 'esquema2'
-            ? '🛠️ MODO FÁBRICA STUDIO ACTIVO (esquema2)'
-            : '📱 MODO INSPECCIÓN PRODUCCIÓN ACTIVO (esquema3)';
-      });
-    }
-  }
-
   void _tocarEsquinaCincoVeces() {
     _toquesEsquina++;
     _timerToques?.cancel();
@@ -145,7 +122,6 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
       ModalesCandadoYEditor.abrirCandadoNegroCamuflado(
         context: context,
         alDesbloquearAdmin: () async {
-          setState(() => _esAdmin = true);
           await sincronizarContratoSdui();
           _abrirEditorJson();
         },
@@ -172,7 +148,12 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
       estadoForm: _estadoForm,
       xpDuolingoActual: _xpDuolingo,
       modo4DXActual: _modo4DXActivo,
-      onFeedback: (msg) => setState(() => _feedback = msg),
+      onFeedback: (msg) {
+        setState(() => _feedback = msg);
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && _feedback == msg) setState(() => _feedback = '');
+        });
+      },
       onXpChanged: (xp) => setState(() => _xpDuolingo = xp),
       on4DXChanged: (activo) {
         _timer4DX?.cancel();
@@ -192,11 +173,16 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
         case 'STUDIO_PRD_RFC_INSPECTOR':
           return Ms14StudioPrdRfcPdf(
             bloque: b,
-            onFeedback: (m) => setState(() => _feedback = m),
+            onFeedback: (m) {
+              setState(() => _feedback = m);
+              Future.delayed(const Duration(seconds: 3), () {
+                if (mounted && _feedback == m) setState(() => _feedback = '');
+              });
+            },
             onSincronizar: sincronizarContratoSdui,
           );
         case 'STITCH_DISENO_1_EXACTO':
-          return SizedBox(height: 820, child: Ms11StitchDiseno1Muro(bloque: b));
+          return Ms11StitchDiseno1Muro(bloque: b);
         case 'STAC_STITCH':
           return Ms10MotoresStacYJdw.construirMotorStacStitch(b: b, anchoPantalla: anchoUtil, onDispararBoton: _ejecutarBoton);
         case 'JSON_DYNAMIC_HIBRIDO':
@@ -270,12 +256,9 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
     final geo = Map.from((_contrato['geometria'] as Map?) ?? {});
     final listaPestanas = ((_contrato['pestanas'] as List?) ?? []).where((p) {
       final mp = Map.from(p as Map);
-      if (mp['visible'] == false) return false;
-      if (mp['rol_permitido'] == 'superadmin' && !_esAdmin) return false;
-      return true;
+      return mp['visible'] != false;
     }).toList();
     final pantallasMap = Map.from((_contrato['pantallas_json'] as Map?) ?? {});
-    final bool enEsq2 = PuenteSupabaseSdui.esquemaActivo == 'esquema2';
 
     return Scaffold(
       backgroundColor: hexAColor(geo['color_fondo']?.toString(), const Color(0xFF071326)),
@@ -284,161 +267,95 @@ class _LienzoMaestroSduiState extends State with WidgetsBindingObserver {
           final double anchoUtil = math.max(300.0, constraints.maxWidth);
           return Stack(
             children: [
-              Padding(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 4,
-                  bottom: MediaQuery.of(context).padding.bottom + 8,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF030E21),
-                        border: Border(bottom: BorderSide(color: Color(0xFF295186))),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: List.generate(listaPestanas.length, (idx) {
-                                  final p = Map.from(listaPestanas[idx] as Map);
-                                  final activa = _indicePagina == idx;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: InkWell(
-                                      onTap: () {
-                                        setState(() => _indicePagina = idx);
-                                        _pageCtrl.animateToPage(idx, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: activa ? const Color(0xFFFBB400) : const Color(0xFF142033),
-                                          borderRadius: BorderRadius.circular(14),
-                                          border: Border.all(color: activa ? Colors.white : const Color(0xFF2A3549)),
-                                        ),
-                                        child: Text(
-                                          p['titulo']?.toString() ?? p['id'].toString(),
-                                          style: TextStyle(
-                                            color: activa ? const Color(0xFF071326) : Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 10.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: _alternarEsquemaEnVivo,
-                            child: Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: enEsq2 ? const Color(0xFF00509D) : const Color(0xFF00C853),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFFBB400)),
-                              ),
-                              child: Text(
-                                enEsq2 ? '🛠️ ESQ2' : '📱 ESQ3',
-                                style: TextStyle(
-                                  color: enEsq2 ? Colors.white : const Color(0xFF071326),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              DespachadorAccionesSdui.generarYMostrarLibroPdfMaestro(
-                                context: context,
-                                tituloPdf: 'Libro Maestro PRD + RFC + SQL + Tablas (Esquema 2 y 3)',
-                                itemsExtra: const [],
-                                onFeedback: (m) => setState(() => _feedback = m),
-                              );
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(color: const Color(0xFF00C853), borderRadius: BorderRadius.circular(12)),
-                              child: const Text('📄 PDF', style: TextStyle(color: Color(0xFF071326), fontSize: 10, fontWeight: FontWeight.w900)),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: _abrirEditorJson,
-                            child: Container(
-                              margin: const EdgeInsets.only(left: 4),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(color: const Color(0xFFF59E0B), borderRadius: BorderRadius.circular(12)),
-                              child: const Text('{ }', style: TextStyle(color: Colors.black, fontSize: 10.5, fontWeight: FontWeight.w900)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_feedback.isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF142033),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFBB400)),
-                        ),
-                        child: Text(
-                          _feedback,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFFFFD795), fontWeight: FontWeight.bold, fontSize: 11.5),
-                        ),
-                      ),
-                    Expanded(
-                      child: PageView.builder(
-                        controller: _pageCtrl,
-                        itemCount: listaPestanas.length,
-                        onPageChanged: (idx) => setState(() => _indicePagina = idx),
-                        itemBuilder: (ctx, idx) {
-                          final p = Map.from(listaPestanas[idx] as Map);
-                          final String idPant = p['id'].toString();
-                          final List bloquesVisibles = List.from(((pantallasMap[idPant] as List?) ?? []).where((b) => (b as Map)['visible'] != false));
+              // 100% PANTALLA COMPLETA SIN BARRA DE BOTONES: SOLO DESLIZAR CON EL DEDO
+              Positioned.fill(
+                child: PageView.builder(
+                  controller: _pageCtrl,
+                  itemCount: listaPestanas.length,
+                  onPageChanged: (idx) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _indicePagina = idx);
+                  },
+                  itemBuilder: (ctx, idx) {
+                    final p = Map.from(listaPestanas[idx] as Map);
+                    final String idPant = p['id'].toString();
+                    final List bloquesVisibles = List.from(((pantallasMap[idPant] as List?) ?? []).where((b) => (b as Map)['visible'] != false));
 
-                          return ListView(
-                            padding: const EdgeInsets.all(10),
-                            children: List.generate(bloquesVisibles.length, (bIdx) {
-                              final Map bloqueMap = Map.from(bloquesVisibles[bIdx] as Map);
-                              return InspectorStitchSdui.envolverConMarcoStitch(
-                                modoEditActivo: _modoStitchEdit,
-                                bloque: bloqueMap,
-                                indice: bIdx,
-                                totalBloques: bloquesVisibles.length,
-                                child: _enrutarMicroservicio(bloqueMap, geo, anchoUtil),
-                                onZoomInspeccionar: () {},
-                                onSubirLugar: () {},
-                                onBajarLugar: () {},
-                                onQuitarComponente: () {},
-                              );
-                            }),
-                          );
-                        },
+                    if (bloquesVisibles.length == 1 && (bloquesVisibles.first as Map)['tipo']?.toString() == 'STITCH_DISENO_1_EXACTO') {
+                      return Ms11StitchDiseno1Muro(bloque: Map.from(bloquesVisibles.first as Map));
+                    }
+
+                    return ListView(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.of(context).padding.top + 10,
+                        bottom: MediaQuery.of(context).padding.bottom + 24,
+                        left: 12,
+                        right: 12,
                       ),
-                    ),
-                  ],
+                      children: List.generate(bloquesVisibles.length, (bIdx) {
+                        final Map bloqueMap = Map.from(bloquesVisibles[bIdx] as Map);
+                        return _enrutarMicroservicio(bloqueMap, geo, anchoUtil);
+                      }),
+                    );
+                  },
                 ),
               ),
+
+              // Indicador minimalista de 3 puntos arriba al centro al deslizar (sin botones que estorben)
+              if (listaPestanas.length > 1)
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 2,
+                  left: 0,
+                  right: 0,
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(listaPestanas.length, (i) {
+                          final bool act = _indicePagina == i;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                            width: act ? 18 : 6,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: act ? const Color(0xFFFBB400) : Colors.white24,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ),
+                ),
+
+              if (_feedback.isNotEmpty)
+                Positioned(
+                  bottom: MediaQuery.of(context).padding.bottom + 88,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF142033).withAlpha(240),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFBB400), width: 1.5),
+                    ),
+                    child: Text(
+                      _feedback,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Color(0xFFFFD795), fontWeight: FontWeight.bold, fontSize: 11.5),
+                    ),
+                  ),
+                ),
+
               Positioned(
                 top: 0,
                 right: 0,
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTap: _tocarEsquinaCincoVeces,
-                  child: const SizedBox(width: 60, height: 45),
+                  child: const SizedBox(width: 75, height: 55),
                 ),
               ),
             ],
